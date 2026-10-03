@@ -1,0 +1,52 @@
+{
+ "2022": {
+  "complete": true,
+  "games": 240,
+  "last_game": "2022-09-18",
+  "rows": 4527,
+  "source": "sportsdataverse",
+  "teams": 12,
+  "updated": "2026-10-03T23:27:45Z",
+  "warnings": []
+ },
+ "2023": {
+  "complete": true,
+  "games": 261,
+  "last_game": "2023-10-18",
+  "rows": 4897,
+  "source": "sportsdataverse",
+  "teams": 12,
+  "updated": "2026-10-03T23:27:46Z",
+  "warnings": []
+ },
+ "2024": {
+  "complete": true,
+  "games": 263,
+  "last_game": "2024-10-20",
+  "rows": 4906,
+  "source": "sportsdataverse",
+  "teams": 12,
+  "updated": "2026-10-03T23:27:46Z",
+  "warnings": []
+ },
+ "2025": {
+  "complete": true,
+  "games": 311,
+  "last_game": "2025-10-10",
+  "rows": 5848,
+  "source": "sportsdataverse",
+  "teams": 13,
+  "updated": "2026-10-03T23:27:47Z",
+  "warnings": []
+ },
+ "2026": {
+  "complete": false,
+  "games": 341,
+  "last_game": "2026-10-02",
+  "rows": 6783,
+  "source": "sportsdataverse",
+  "teams": 15,
+  "updated": "2026-10-03T23:27:47Z",
+  "warnings": []
+ }
+}

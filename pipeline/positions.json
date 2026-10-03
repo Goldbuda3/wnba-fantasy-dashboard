@@ -1,0 +1,8 @@
+{
+  "_comment": "Maps raw position listings to dashboard buckets G/F/C. Rule for hybrids: the FIRST listed position wins (G-F -> G, F-G -> F, F-C -> F, C-F -> C). Edit here and re-run the pipeline with --force to apply.",
+  "G": "G", "PG": "G", "SG": "G", "GUARD": "G", "POINT GUARD": "G", "SHOOTING GUARD": "G",
+  "G-F": "G", "G/F": "G",
+  "F": "F", "SF": "F", "PF": "F", "FORWARD": "F", "SMALL FORWARD": "F", "POWER FORWARD": "F",
+  "F-G": "F", "F/G": "F", "F-C": "F", "F/C": "F",
+  "C": "C", "CENTER": "C", "C-F": "C", "C/F": "C"
+}

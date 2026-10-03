@@ -1,0 +1,99 @@
+name: Update data and deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons to fetch: a range (2022-2026), a list (2024,2026), or blank for the default in pipeline/config.json (last 5)"
+        required: false
+        default: ""
+        type: string
+      force:
+        description: "Force refresh: re-fetch seasons even if their JSON already exists"
+        required: false
+        default: false
+        type: boolean
+      deploy_only:
+        description: "Skip fetching and just redeploy the site (e.g. after a frontend change)"
+        required: false
+        default: false
+        type: boolean
+
+  # Weekly refresh: Tuesday 8:00 AM Central Daylight Time (13:00 UTC; 7:00 AM during standard time).
+  # To enable before next season, uncomment the two lines below and commit to main.
+  # A scheduled run uses the default seasons from pipeline/config.json; completed
+  # seasons are skipped automatically, so only the current season is re-fetched.
+  # schedule:
+  #   - cron: "0 13 * * 2"
+
+permissions:
+  contents: write   # commit updated JSON
+  pages: write      # deploy to GitHub Pages
+  id-token: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: ${{ !inputs.deploy_only }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        if: ${{ !inputs.deploy_only }}
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline (fetch + validate)
+        if: ${{ !inputs.deploy_only }}
+        env:
+          SEASONS: ${{ inputs.seasons }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=()
+          if [ -n "$SEASONS" ]; then args+=(--seasons "$SEASONS"); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          # Exits non-zero if any season fails validation, which stops the job
+          # before anything is committed or deployed.
+          python pipeline/fetch.py "${args[@]}"
+
+      - name: Commit updated data (only if changed)
+        if: ${{ !inputs.deploy_only }}
+        run: |
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update WNBA data ($(date -u +%Y-%m-%d))"
+          git push
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r index.html css js data _site/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

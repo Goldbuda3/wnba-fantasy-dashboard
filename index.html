@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WNBA Defense vs Position</title>
+  <meta name="description" content="WNBA fantasy basketball: how each defense performs against guards, forwards and centers.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%23e8743b'/><path d='M6 50h88M50 6v88M20 18c18 18 18 46 0 64M80 18c-18 18-18 46 0 64' stroke='%23111' stroke-width='5' fill='none'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title">
+      <h1>WNBA Defense vs Position</h1>
+      <p class="updated" id="updated" aria-live="polite"></p>
+    </div>
+    <label class="season">
+      <span>Season</span>
+      <select id="season" aria-label="Season"></select>
+    </label>
+  </header>
+
+  <section class="controls" aria-label="Filters">
+    <label>
+      <span>Scoring</span>
+      <select id="score"></select>
+    </label>
+    <div class="seg" role="group" aria-label="Rate">
+      <span>Rate</span>
+      <div>
+        <button type="button" data-key="pace" data-val="game">Per game</button>
+        <button type="button" data-key="pace" data-val="100">Per 100 poss</button>
+      </div>
+    </div>
+    <div class="seg" role="group" aria-label="Games window">
+      <span>Games</span>
+      <div>
+        <button type="button" data-key="win" data-val="all">Season</button>
+        <button type="button" data-key="win" data-val="10">Last 10</button>
+        <button type="button" data-key="win" data-val="5">Last 5</button>
+      </div>
+    </div>
+    <div class="seg" role="group" aria-label="Game type">
+      <span>Game type</span>
+      <div>
+        <button type="button" data-key="po" data-val="0">Regular</button>
+        <button type="button" data-key="po" data-val="1">+ Playoffs</button>
+        <button type="button" data-key="po" data-val="2">Playoffs</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button type="button" role="tab" data-view="dvp">Defense vs position</button>
+    <button type="button" role="tab" data-view="stats">Stat breakdown</button>
+    <button type="button" role="tab" data-view="team">Team drill-down</button>
+    <button type="button" role="tab" data-view="adj">Matchup +/-</button>
+  </nav>
+
+  <div id="notices" class="notices" aria-live="polite"></div>
+  <main id="main" tabindex="-1"><p class="loading">Loading…</p></main>
+
+  <footer>
+    <p>
+      Data: ESPN box scores via <a href="https://github.com/sportsdataverse/sportsdataverse-py">sportsdataverse</a>.
+      Positions are grouped G / F / C (hybrids use the first listed position).
+      Possessions = FGA − OREB + TOV + 0.44·FTA, averaged for both teams.
+      Scoring values live in <code>js/scoring.js</code>.
+    </p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
