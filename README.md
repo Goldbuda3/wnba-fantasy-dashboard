@@ -11,7 +11,7 @@ A WNBA fantasy basketball dashboard that shows how each team's defense performs 
 
 Every view has these filters:
 
-- scoring preset (Standard / DraftKings / FanDuel)
+- scoring preset (Standard / DraftKings / FanDuel / Custom)
 - per game or per 100 possessions
 - full season, last 10 or last 5 games
 - regular season, with playoffs, or playoffs only
@@ -132,6 +132,18 @@ That runs every Tuesday at 13:00 UTC (8 AM Central in-season during daylight tim
 
 ## Change scoring presets
 
+### In the dashboard (Custom)
+
+Pick **Custom** in the Scoring dropdown. An editor opens with a box for each stat, pre-filled with ESPN's default values, plus double-double and triple-double bonuses (0 = off). Every number recalculates as you type.
+
+- Your values go into the link (`cs=pts1,reb1.2,ast1.5,...`), so sharing the URL shares your scoring.
+- They're also saved in your browser, so Custom remembers them next time. A shared link's values take priority over saved ones.
+- **Reset to ESPN** puts the ESPN values back.
+
+The dashboard opens with **Standard (ESPN)** selected. To change that, set `DEFAULT_PRESET` in `js/scoring.js`.
+
+### In the code
+
 Edit `js/scoring.js`. Each preset has:
 
 ```js
@@ -144,7 +156,8 @@ draftkings: {
 
 - `values`: points per stat (keys: `pts reb ast stl blk tov tpm fgm fga ftm fta`).
 - `bonus` (optional): double-double / triple-double bonus. `stack: true` means a triple-double also earns the double-double bonus.
-- Add a new key to add a preset; it appears in the dropdown automatically. Change `DEFAULT_PRESET` to change the default.
+- Add a new key (above `custom`) to add a preset; it appears in the dropdown automatically. Change `DEFAULT_PRESET` to change the default (currently `standard`).
+- The Custom preset starts from the `standard` values, so changing `standard` also changes Custom's starting point.
 
 Preset values, as checked on 2026-10-03:
 

@@ -1,4 +1,7 @@
-import { PRESETS, DEFAULT_PRESET, STAT_LABELS, makeScorer, presetStats } from './scoring.js';
+import {
+  PRESETS, DEFAULT_PRESET, STAT_LABELS, EDITABLE_STATS, makeScorer, presetStats,
+  encodeCustom, decodeCustom, resetCustom,
+} from './scoring.js';
 
 const POS = ['G', 'F', 'C'];
 const POS_COLS = [...POS, 'all'];
@@ -9,8 +12,9 @@ const VIEWS = ['dvp', 'stats', 'team', 'adj'];
 // Everything here is mirrored in the URL so views can be bookmarked/shared.
 const DEFAULTS = {
   season: null, view: 'dvp', score: DEFAULT_PRESET, pace: 'game', win: 'all', po: '0',
-  team: null, pos: 'G', sort: null, dir: 'desc',
+  team: null, pos: 'G', sort: null, dir: 'desc', cs: null,
 };
+const CUSTOM_STORE = 'wnba-dvp-custom-scoring';
 const ALLOWED = {
   view: VIEWS, score: Object.keys(PRESETS), pace: ['game', '100'], win: ['all', '10', '5'],
   po: ['0', '1', '2'], pos: [...POS, 'all'], dir: ['asc', 'desc'],
@@ -37,6 +41,7 @@ function readURL() {
     if (ALLOWED[k] && !ALLOWED[k].includes(v)) continue;
     state[k] = v;
   }
+  if (state.cs && !decodeCustom(state.cs)) state.cs = null;
 }
 
 function writeURL() {
@@ -46,9 +51,10 @@ function writeURL() {
     if (v == null || (v === def && k !== 'season')) continue;
     if (k === 'team' && state.view !== 'team') continue;
     if (k === 'pos' && state.view !== 'stats') continue;
+    if (k === 'cs' && state.score !== 'custom') continue;
     q.set(k, v);
   }
-  const s = q.toString();
+  const s = q.toString().replace(/%2C/g, ','); // keep custom scoring readable: cs=pts1,reb1.2,...
   history.replaceState(null, '', s ? `?${s}` : location.pathname);
 }
 
@@ -99,7 +105,7 @@ const paceOn = () => state.pace === '100';
 // Fantasy points + each player's leave-one-out average (the "expected" line
 // used for opponent adjustment) for the current preset and game type.
 function ensureScores() {
-  const key = `${state.score}|${state.po}`;
+  const key = `${state.score}|${state.score === 'custom' ? encodeCustom() : ''}|${state.po}`;
   if (D.scoreKey === key) return;
   const { R, n } = D;
   const f = makeScorer(state.score, R);
@@ -232,7 +238,7 @@ function linkFor(over) {
   const q = new URLSearchParams();
   const s = { ...state, ...over, sort: null, dir: 'desc' };
   for (const [k, def] of Object.entries(DEFAULTS)) if (s[k] != null && (s[k] !== def || k === 'season')) q.set(k, s[k]);
-  return q.toString();
+  return q.toString().replace(/%2C/g, ',');
 }
 
 function rateLabel() { return paceOn() ? 'per 100 possessions' : 'per game'; }
@@ -427,7 +433,49 @@ function renderNotices() {
   $('#notices').innerHTML = out.map((m) => `<p class="notice">${esc(m)}</p>`).join('');
 }
 
+// ------------------------------------------------------------------ custom scoring
+
+const CUSTOM_FIELDS = [...EDITABLE_STATS.map((k) => [k, STAT_LABELS[k]]), ['dd', 'DD bonus'], ['td', 'TD bonus']];
+
+function buildCustomEditor() {
+  $('#custom-grid').innerHTML = CUSTOM_FIELDS.map(([k, label]) => `<label><span>${esc(label)}</span>`
+    + `<input type="number" step="0.05" inputmode="decimal" data-custom="${k}" aria-label="${esc(label)} points"></label>`).join('');
+  fillCustomEditor();
+}
+
+function fillCustomEditor() {
+  const { values, bonus } = PRESETS.custom;
+  document.querySelectorAll('#custom-grid input').forEach((el) => {
+    const k = el.dataset.custom;
+    el.value = String((k === 'dd' || k === 'td' ? bonus[k] : values[k]) || 0);
+  });
+}
+
+function saveCustom() {
+  try { localStorage.setItem(CUSTOM_STORE, encodeCustom()); } catch { /* storage unavailable */ }
+}
+
+function loadSavedCustom() {
+  try {
+    const saved = localStorage.getItem(CUSTOM_STORE);
+    if (saved) decodeCustom(saved);
+  } catch { /* storage unavailable */ }
+}
+
+function onCustomInput(el) {
+  const k = el.dataset.custom;
+  const v = el.value.trim() === '' ? 0 : Number(el.value);
+  if (!Number.isFinite(v)) return;
+  if (k === 'dd' || k === 'td') PRESETS.custom.bonus[k] = v;
+  else PRESETS.custom.values[k] = v;
+  saveCustom();
+  render();
+}
+
 function renderControls() {
+  const custom = state.score === 'custom';
+  $('#custom-scoring').hidden = !custom;
+  state.cs = custom ? encodeCustom() : null;
   document.querySelectorAll('.controls .seg button').forEach((b) => b.setAttribute('aria-pressed', String(state[b.dataset.key] === b.dataset.val)));
   const noPoss = D && D.raw.coverage.possessions === 0;
   const pace100 = document.querySelector('[data-key="pace"][data-val="100"]');
@@ -471,6 +519,8 @@ async function selectSeason(season) {
 function bind() {
   $('#season').addEventListener('change', (e) => { state.sort = null; selectSeason(e.target.value); });
   $('#score').addEventListener('change', (e) => { state.score = e.target.value; render(); });
+  $('#custom-grid').addEventListener('input', (e) => { if (e.target.dataset.custom) onCustomInput(e.target); });
+  $('#custom-reset').addEventListener('click', () => { resetCustom(); fillCustomEditor(); saveCustom(); render(); });
   document.addEventListener('click', (e) => {
     const seg = e.target.closest('.seg button[data-key]');
     if (seg) {
@@ -507,7 +557,9 @@ function bind() {
 
 async function init() {
   readURL();
+  if (!state.cs) loadSavedCustom(); // a shared link's values win over saved ones
   $('#score').innerHTML = Object.entries(PRESETS).map(([k, p]) => `<option value="${k}">${esc(p.label)}</option>`).join('');
+  buildCustomEditor();
   bind();
   try {
     [seasonsIndex, meta] = await Promise.all([getJSON('data/seasons.json'), getJSON('data/meta.json').catch(() => ({}))]);

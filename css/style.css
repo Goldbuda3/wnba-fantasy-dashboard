@@ -97,6 +97,22 @@ button:focus-visible, select:focus-visible, th button:focus-visible { outline: 2
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); border-color: var(--ink); position: relative; }
 .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.custom {
+  margin-top: 8px; padding: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
+.custom[hidden] { display: none; }
+.custom-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.custom-head p { margin: 0; font-size: 0.85rem; color: var(--ink-2); }
+.custom-head b { color: var(--ink); }
+.custom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.custom-grid input {
+  font: inherit; color: var(--ink); background: var(--page); width: 100%;
+  border: 1px solid var(--border); border-radius: var(--radius); min-height: 36px; padding: 4px 8px;
+}
+.custom-grid input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.custom-grid input:invalid { border-color: var(--soft); }
+
 .tabs {
   display: flex; gap: 4px; margin: 16px 0 0; border-bottom: 1px solid var(--border);
   overflow-x: auto; scrollbar-width: none;
