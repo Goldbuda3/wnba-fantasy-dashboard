@@ -304,6 +304,9 @@ tr.game-head td small { color: var(--ink-2); font-weight: 400; margin-left: 8px;
 
 .foot-note { color: var(--ink-2); font-size: 0.8rem; margin: 8px 0 0; }
 footer { margin-top: 32px; color: var(--ink-3); font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 12px; }
+footer p { margin: 0 0 8px; }
+footer .back { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+footer .back:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------------ mobile */
 @media (max-width: 720px) {
