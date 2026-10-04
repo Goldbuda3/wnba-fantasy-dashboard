@@ -8,7 +8,7 @@ const POS_COLS = [...POS, 'all'];
 const POS_LABEL = { G: 'Guards', F: 'Forwards', C: 'Centers', all: 'All' };
 const BREAKDOWN = ['fp', 'pts', 'reb', 'ast', 'tpm', 'stl', 'blk'];
 const VIEWS = ['dvp', 'stats', 'team', 'adj', 'players'];
-const PLAYER_KEYS = ['player', 'per', 'span', 'period', 'mingp', 'minmpg', 'cols'];
+const PLAYER_KEYS = ['player', 'per', 'span', 'period', 'mingp', 'minmpg', 'cols', 'ppos'];
 const NUMERIC = ['mingp', 'minmpg'];
 
 // Everything here is mirrored in the URL so views can be bookmarked/shared.
@@ -16,13 +16,13 @@ const DEFAULTS = {
   season: null, view: 'dvp', score: DEFAULT_PRESET, pace: 'game', win: 'all', po: '0',
   team: null, pos: 'G', sort: null, dir: 'desc', cs: null,
   player: null, per: 'game', span: 'season', period: null, mingp: null, minmpg: null, cols: 'key',
-  tpos: 'all',
+  tpos: 'all', ppos: 'all',
 };
 const CUSTOM_STORE = 'wnba-dvp-custom-scoring';
 const ALLOWED = {
   view: VIEWS, score: Object.keys(PRESETS), pace: ['game', '100'], win: ['all', '10', '5'],
   po: ['0', '1', '2'], pos: [...POS, 'all'], dir: ['asc', 'desc'],
-  per: ['game', 'tot'], span: ['season', 'month', 'week'], cols: ['key', 'all'], tpos: ['all', ...POS],
+  per: ['game', 'tot'], span: ['season', 'month', 'week'], cols: ['key', 'all'], tpos: ['all', ...POS], ppos: ['all', ...POS],
 };
 
 const state = { ...DEFAULTS };
@@ -644,7 +644,8 @@ function viewPlayerList() {
   const minBox = (id, key, label, step) => `<label class="min-box"><span>${label}</span><input type="number" id="${id}" data-min="${key}" min="0" step="${step}" inputmode="decimal" placeholder="Any" value="${esc(state[key] ?? '')}"></label>`;
   const mins = minBox('min-gp', 'mingp', 'Min GP', 1) + (playerCols().includes('min') ? minBox('min-mpg', 'minmpg', 'Min MPG', 1) : '');
   const colsSeg = seg('cols', 'Columns', [['key', 'Essentials'], ['all', 'All stats']]);
-  const tools = `<div class="view-tools">${perSeg()}${seg('span', 'Period', [['season', 'Season'], ['month', 'Month'], ['week', 'Week']])}${periodPick}${colsSeg}${mins}${search}</div>`;
+  const posSeg = seg('ppos', 'Position', [['all', 'All'], ...POS.map((p) => [p, p])]);
+  const tools = `<div class="view-tools">${perSeg()}${seg('span', 'Period', [['season', 'Season'], ['month', 'Month'], ['week', 'Week']])}${periodPick}${colsSeg}${posSeg}${mins}${search}</div>`;
   const what = period ? (span === 'week' ? `week of ${PERIOD.week.label(period)}` : PERIOD.month.label(period)) : 'full season';
   const head = `<div class="view-head"><div><h2>Player stats</h2>
     <p>${totalsOn() ? 'Totals' : 'Per-game averages'} · ${esc(what)} · ${typeLabel()} · ${esc(PRESETS[state.score].label)} fantasy points.
@@ -668,7 +669,7 @@ function viewPlayerList() {
         ${groups.map((g) => `<th colspan="${g.cols.length}" class="grp">${g.label}</th>`).join('')}</tr>
       <tr>${flat.map(({ c, start }) => sortHeader(c, c === 'gp' ? 'GP' : colLabel(c), start ? 'gs' : '')).join('')}</tr>
     </thead>
-    <tbody>${rows.map((r) => `<tr data-find="${esc(`${D.raw.players.name[r.p]} ${teamAbbr(r.team)} ${teamName(r.team)}`.toLowerCase())}" data-gp="${r.e.gp}" data-mpg="${r.e.n.min ? r.e.sum.min / r.e.n.min : ''}">
+    <tbody>${rows.map((r) => `<tr data-find="${esc(`${D.raw.players.name[r.p]} ${teamAbbr(r.team)} ${teamName(r.team)}`.toLowerCase())}" data-gp="${r.e.gp}" data-mpg="${r.e.n.min ? r.e.sum.min / r.e.n.min : ''}" data-pos="${esc(D.raw.players.pos[r.p] || '')}">
       <td>${playerLink(r.p)}</td><td class="l">${posTag(r.p)}</td><td class="l muted">${esc(teamAbbr(r.team))}</td>${flat.map((f) => cell(r, f)).join('')}</tr>`).join('')}</tbody>
   </table></div>
   <p class="empty" id="player-none" hidden>No players match these filters.</p>
@@ -748,7 +749,8 @@ function applyPlayerFilters() {
   let shown = 0;
   trs.forEach((tr) => {
     const mpg = tr.dataset.mpg === '' ? NaN : Number(tr.dataset.mpg);
-    tr.hidden = (q && !tr.dataset.find.includes(q)) || Number(tr.dataset.gp) < minGp || (minMpg > 0 && !(mpg >= minMpg));
+    tr.hidden = (q && !tr.dataset.find.includes(q)) || Number(tr.dataset.gp) < minGp || (minMpg > 0 && !(mpg >= minMpg))
+      || (state.ppos !== 'all' && tr.dataset.pos !== state.ppos);
     if (!tr.hidden) shown++;
     tr.classList.toggle('alt', !tr.hidden && shown % 2 === 0); // stripe visible rows only
   });
