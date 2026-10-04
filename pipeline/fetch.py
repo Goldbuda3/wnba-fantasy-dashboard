@@ -38,7 +38,7 @@ POSITION_MAP = {
 }
 
 # Standard column -> raw stat columns written to the season file, in order.
-STAT_COLS = ["min", "pts", "reb", "ast", "stl", "blk", "tov", "tpm", "fgm", "fga", "ftm", "fta"]
+STAT_COLS = ["min", "pts", "reb", "ast", "stl", "blk", "tov", "tpm", "fgm", "fga", "ftm", "fta", "tpa", "pf"]
 REQUIRED_STATS = ["pts", "reb", "ast", "stl", "blk", "tov"]
 
 
@@ -116,6 +116,8 @@ def load_sportsdataverse(season: int) -> tuple[pd.DataFrame, pd.DataFrame | None
         "fga": _col(raw, "field_goals_attempted"),
         "ftm": _col(raw, "free_throws_made"),
         "fta": _col(raw, "free_throws_attempted"),
+        "tpa": _col(raw, "three_point_field_goals_attempted"),
+        "pf": _col(raw, "fouls"),
     })
 
     team = None
@@ -179,6 +181,7 @@ def load_nba_api(season: int) -> tuple[pd.DataFrame, pd.DataFrame | None]:
         "min": raw["MIN"], "pts": raw["PTS"], "reb": raw["REB"], "oreb": raw["OREB"],
         "ast": raw["AST"], "stl": raw["STL"], "blk": raw["BLK"], "tov": raw["TOV"],
         "tpm": raw["FG3M"], "fgm": raw["FGM"], "fga": raw["FGA"], "ftm": raw["FTM"], "fta": raw["FTA"],
+        "tpa": raw["FG3A"], "pf": raw["PF"],
     })
     return p, None  # possessions computed from player sums
 
