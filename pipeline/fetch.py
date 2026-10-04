@@ -183,14 +183,37 @@ def load_nba_api(season: int) -> tuple[pd.DataFrame, pd.DataFrame | None]:
     return p, None  # possessions computed from player sums
 
 
+def cup_final_ids(season: int) -> set[str]:
+    """Commissioner's Cup Championship game ids. ESPN files the final under the
+    regular season, but it doesn't count toward standings or season stats."""
+    import sportsdataverse.wnba as wnba
+
+    s = wnba.load_wnba_schedule(seasons=[season], return_as_pandas=True)
+    if s is None or len(s) == 0:
+        return set()
+    return set(s.loc[_col(s, "type_abbreviation") == "CC", "game_id"].astype(str))
+
+
 def load_season(season: int) -> tuple[pd.DataFrame, pd.DataFrame | None, str]:
     try:
         p, t = load_sportsdataverse(season)
-        return p, t, "sportsdataverse"
+        source = "sportsdataverse"
     except Exception as e:
         print(f"  [warn] sportsdataverse failed for {season}: {e}; trying nba_api")
-    p, t = load_nba_api(season)
-    return p, t, "nba_api"
+        p, t = load_nba_api(season)
+        source = "nba_api"
+
+    try:
+        cup = cup_final_ids(season)
+    except Exception as e:
+        print(f"  [warn] schedule unavailable for {season}; Commissioner's Cup final not filtered: {e}")
+        cup = set()
+    if cup:
+        print(f"  dropping Commissioner's Cup final {sorted(cup)}")
+        p = p[~p["game_id"].isin(cup)]
+        if t is not None:
+            t = t[~t["game_id"].isin(cup)]
+    return p, t, source
 
 
 # --------------------------------------------------------------------------- transform
