@@ -2,37 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>WNBA Defense vs Position</title>
   <meta name="description" content="WNBA fantasy basketball: how each defense performs against guards, forwards and centers.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%23e8743b'/><path d='M6 50h88M50 6v88M20 18c18 18 18 46 0 64M80 18c-18 18-18 46 0 64' stroke='%23111' stroke-width='5' fill='none'/></svg>">
+  <script>
+    // Dark by default; a saved light/dark choice wins. Set before first paint so the page doesn't flash.
+    let theme = 'dark';
+    try {
+      const t = localStorage.getItem('wnba-theme');
+      if (t === 'light' || t === 'dark') theme = t;
+    } catch { /* storage unavailable: use the default */ }
+    document.documentElement.dataset.theme = theme;
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="top">
-    <div class="title">
-      <h1>WNBA Defense vs Position</h1>
-      <p class="updated" id="updated" aria-live="polite"></p>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44"/><path d="M6 50h88M50 6v88M20 18c18 18 18 46 0 64M80 18c-18 18-18 46 0 64"/></svg>
+      <h1><span class="long">WNBA Defense vs Position</span><span class="short">WNBA DvP</span></h1>
     </div>
-    <label class="season">
-      <span>Season</span>
-      <select id="season" aria-label="Season"></select>
-    </label>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button type="button" role="tab" data-view="dvp">Defense vs position</button>
+      <button type="button" role="tab" data-view="stats">Stat breakdown</button>
+      <button type="button" role="tab" data-view="team">Team drill-down</button>
+      <button type="button" role="tab" data-view="adj">Matchup +/-</button>
+      <button type="button" role="tab" data-view="players">Players</button>
+    </nav>
+    <div class="top-actions">
+      <select class="season-select mobile-only" aria-label="Season"></select>
+      <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
   </header>
 
-  <section class="controls" aria-label="Filters">
+  <button type="button" class="filter-bar mobile-only" id="filter-open" aria-controls="controls" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+    <b>Filters</b>
+    <span id="filter-summary"></span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+
+  <!-- Desktop: an inline filter bar. Mobile: a bottom sheet opened from the Filters button. -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <section class="controls" id="controls" aria-label="Filters" tabindex="-1">
+    <h2 class="sheet-title mobile-only">Filters</h2>
+    <label class="desktop-only">
+      <span>Season</span>
+      <select class="season-select"></select>
+    </label>
     <label>
       <span>Scoring</span>
       <select id="score"></select>
     </label>
-    <div class="seg" role="group" aria-label="Rate">
+    <div class="seg" role="group" aria-label="Rate" data-defense-only>
       <span>Rate</span>
       <div>
         <button type="button" data-key="pace" data-val="game">Per game</button>
         <button type="button" data-key="pace" data-val="100">Per 100 poss</button>
       </div>
     </div>
-    <div class="seg" role="group" aria-label="Games window">
+    <div class="seg" role="group" aria-label="Games window" data-defense-only>
       <span>Games</span>
       <div>
         <button type="button" data-key="win" data-val="all">Season</button>
@@ -48,6 +84,8 @@
         <button type="button" data-key="po" data-val="2">Playoffs</button>
       </div>
     </div>
+    <p class="updated" id="updated" aria-live="polite"></p>
+    <button type="button" class="sheet-done mobile-only" id="filter-done">Show results</button>
   </section>
 
   <section id="custom-scoring" class="custom" aria-label="Custom scoring" hidden>
@@ -57,13 +95,6 @@
     </div>
     <div class="custom-grid" id="custom-grid"></div>
   </section>
-
-  <nav class="tabs" role="tablist" aria-label="Views">
-    <button type="button" role="tab" data-view="dvp">Defense vs position</button>
-    <button type="button" role="tab" data-view="stats">Stat breakdown</button>
-    <button type="button" role="tab" data-view="team">Team drill-down</button>
-    <button type="button" role="tab" data-view="adj">Matchup +/-</button>
-  </nav>
 
   <div id="notices" class="notices" aria-live="polite"></div>
   <main id="main" tabindex="-1"><p class="loading">Loading…</p></main>
@@ -76,6 +107,14 @@
       Scoring values live in <code>js/scoring.js</code>.
     </p>
   </footer>
+
+  <nav class="bottom-nav mobile-only" aria-label="Views">
+    <button type="button" data-view="dvp"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>DvP</button>
+    <button type="button" data-view="stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Stats</button>
+    <button type="button" data-view="team"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg>Teams</button>
+    <button type="button" data-view="adj"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v8M3 8h8M14 18h7M5 20L19 4"/></svg>+/-</button>
+    <button type="button" data-view="players"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Players</button>
+  </nav>
 
   <script type="module" src="js/app.js"></script>
 </body>
