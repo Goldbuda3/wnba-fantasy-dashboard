@@ -190,6 +190,11 @@ tbody tr:last-child td { border-bottom: 0; }
 th { font-size: 0.75rem; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.03em; background: var(--surface); position: sticky; top: 0; }
 th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; }
 th:first-child { z-index: 2; }
+/* Ranked tables pin both the # column and the team column beside it. */
+table.ranked { --rank-w: 2.5rem; }
+table.ranked .rank { width: var(--rank-w); min-width: var(--rank-w); max-width: var(--rank-w); box-sizing: border-box; padding-right: 0; text-align: left; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+table.ranked th:nth-child(2), table.ranked td:nth-child(2) { position: sticky; left: var(--rank-w); background: var(--surface); z-index: 1; }
+table.ranked th:nth-child(2) { z-index: 2; }
 th button {
   all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center;
 }
@@ -212,8 +217,8 @@ table.grouped th.grp {
   border-left: 1px solid var(--border); letter-spacing: 0.05em;
 }
 table.grouped .gs { border-left: 1px solid var(--border); }
-/* The second header row's first cell is a stat column, not the sticky player column. */
-table.grouped thead tr + tr th:first-child { left: auto; z-index: 1; text-align: right; }
+/* The second header row's first cells are stat columns, not the sticky rank/player columns. */
+table.grouped thead tr + tr th:first-child, table.grouped thead tr + tr th:nth-child(2) { left: auto; z-index: 1; text-align: right; }
 table.grouped td.lead { font-weight: 700; font-size: 1.05rem; color: var(--accent); }
 table.grouped tr.alt td { background: color-mix(in oklab, var(--surface-2) 55%, var(--surface)); }
 
@@ -296,7 +301,7 @@ h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; marg
 }
 .btn-link:hover { background: var(--surface-2); }
 @media (min-width: 721px) {
-  .split tr.selected td:first-child { background: var(--surface-2); }
+  .split tr.selected td:first-child, .split tr.selected td:nth-child(2) { background: var(--surface-2); }
   .split tr.selected .team-cell b { color: var(--accent); }
 }
 tr.game-head td { background: var(--surface-2); font-weight: 600; text-align: left; position: static; }

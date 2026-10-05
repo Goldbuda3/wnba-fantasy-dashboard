@@ -242,6 +242,9 @@ function sortRows(rows, getters, defaultKey) {
   });
 }
 
+// Position in the current sort order.
+const rankCell = (i) => `<td class="rank">${i + 1}</td>`;
+
 function teamCell(t) {
   return `<td><a class="team-link" href="?${linkFor({ view: 'team', team: teamAbbr(t) })}" data-team="${esc(teamAbbr(t))}">`
     + `<span class="team-cell"><b>${esc(teamAbbr(t))}</b><small>${esc(teamName(t))}</small></span></a></td>`;
@@ -301,9 +304,9 @@ function viewDvp() {
     </div>
     <div class="split">
       <div class="split-main">
-        <div class="table-wrap"><table>
-          <thead><tr>${sortHeader('team', 'Defense', 'l')}${POS_COLS.map((c) => sortHeader(c, POS_LABEL[c])).join('')}${sortHeader('games', 'GP')}</tr></thead>
-          <tbody>${rows.map((r) => `<tr${r === sel ? ' class="selected"' : ''}>${teamCell(r.t)}${POS_COLS.map((c) => cell(r, c)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
+        <div class="table-wrap"><table class="ranked">
+          <thead><tr><th class="rank" aria-label="Rank">#</th>${sortHeader('team', 'Defense', 'l')}${POS_COLS.map((c) => sortHeader(c, POS_LABEL[c])).join('')}${sortHeader('games', 'GP')}</tr></thead>
+          <tbody>${rows.map((r, i) => `<tr${r === sel ? ' class="selected"' : ''}>${rankCell(i)}${teamCell(r.t)}${POS_COLS.map((c) => cell(r, c)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
         </table></div>
         <p class="foot-note">“All” includes players without a listed position.
           <span class="desk-note">Click a team to see its profile.</span><span class="mob-note">Tap a team for its game-by-game drill-down.</span></p>
@@ -375,9 +378,9 @@ function viewStats() {
       </div>
       <div class="view-tools">${posSeg}${legend()}</div>
     </div>
-    <div class="table-wrap"><table>
-      <thead><tr>${sortHeader('team', 'Defense', 'l')}${cols.map((s) => sortHeader(s, label(s))).join('')}${sortHeader('games', 'GP')}</tr></thead>
-      <tbody>${rows.map((r) => `<tr>${teamCell(r.t)}${cols.map((s) => cell(r, s, s === 'fp' || s === 'pts' || s === 'reb' ? 1 : 2)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
+    <div class="table-wrap"><table class="ranked">
+      <thead><tr><th class="rank" aria-label="Rank">#</th>${sortHeader('team', 'Defense', 'l')}${cols.map((s) => sortHeader(s, label(s))).join('')}${sortHeader('games', 'GP')}</tr></thead>
+      <tbody>${rows.map((r, i) => `<tr>${rankCell(i)}${teamCell(r.t)}${cols.map((s) => cell(r, s, s === 'fp' || s === 'pts' || s === 'reb' ? 1 : 2)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
     </table></div>
     ${missing.length ? `<p class="foot-note">Not available for ${D.raw.season}: ${missing.map((s) => STAT_LABELS[s]).join(', ')}.</p>` : ''}`;
 }
@@ -400,9 +403,9 @@ function viewAdj() {
       </div>
       ${legend('Holds below avg', 'Allows above avg')}
     </div>
-    <div class="table-wrap"><table>
-      <thead><tr>${sortHeader('team', 'Defense', 'l')}${POS_COLS.map((c) => sortHeader(c, POS_LABEL[c])).join('')}${sortHeader('games', 'GP')}</tr></thead>
-      <tbody>${rows.map((r) => `<tr>${teamCell(r.t)}${POS_COLS.map((c) => cell(r, c, 1, true)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
+    <div class="table-wrap"><table class="ranked">
+      <thead><tr><th class="rank" aria-label="Rank">#</th>${sortHeader('team', 'Defense', 'l')}${POS_COLS.map((c) => sortHeader(c, POS_LABEL[c])).join('')}${sortHeader('games', 'GP')}</tr></thead>
+      <tbody>${rows.map((r, i) => `<tr>${rankCell(i)}${teamCell(r.t)}${POS_COLS.map((c) => cell(r, c, 1, true)).join('')}<td class="muted">${r.games}</td></tr>`).join('')}</tbody>
     </table></div>
     <p class="foot-note">Players with only one game this season have no baseline and are left out.</p>`;
 }
@@ -663,14 +666,14 @@ function viewPlayerList() {
     return `<td${cls ? ` class="${cls}"` : ''}>${v}</td>`;
   };
   const rowspan = (th) => th.replace('<th ', '<th rowspan="2" ');
-  return `${head}<div class="table-wrap"><table class="grouped">
+  return `${head}<div class="table-wrap"><table class="grouped ranked">
     <thead>
-      <tr>${rowspan(sortHeader('player', 'Player', 'l'))}<th rowspan="2" class="l">Pos</th>${rowspan(sortHeader('team', 'Team', 'l'))}
+      <tr><th rowspan="2" class="rank" aria-label="Rank">#</th>${rowspan(sortHeader('player', 'Player', 'l'))}<th rowspan="2" class="l">Pos</th>${rowspan(sortHeader('team', 'Team', 'l'))}
         ${groups.map((g) => `<th colspan="${g.cols.length}" class="grp">${g.label}</th>`).join('')}</tr>
       <tr>${flat.map(({ c, start }) => sortHeader(c, c === 'gp' ? 'GP' : colLabel(c), start ? 'gs' : '')).join('')}</tr>
     </thead>
     <tbody>${rows.map((r) => `<tr data-find="${esc(`${D.raw.players.name[r.p]} ${teamAbbr(r.team)} ${teamName(r.team)}`.toLowerCase())}" data-gp="${r.e.gp}" data-mpg="${r.e.n.min ? r.e.sum.min / r.e.n.min : ''}" data-pos="${esc(D.raw.players.pos[r.p] || '')}">
-      <td>${playerLink(r.p)}</td><td class="l">${posTag(r.p)}</td><td class="l muted">${esc(teamAbbr(r.team))}</td>${flat.map((f) => cell(r, f)).join('')}</tr>`).join('')}</tbody>
+      <td class="rank"></td><td>${playerLink(r.p)}</td><td class="l">${posTag(r.p)}</td><td class="l muted">${esc(teamAbbr(r.team))}</td>${flat.map((f) => cell(r, f)).join('')}</tr>`).join('')}</tbody>
   </table></div>
   <p class="empty" id="player-none" hidden>No players match these filters.</p>
   <p class="foot-note" id="player-count"></p>`;
@@ -747,10 +750,14 @@ function applyPlayerFilters() {
   const minMpg = Number(state.minmpg) || 0;
   const trs = document.querySelectorAll('tr[data-find]');
   let shown = 0;
+  let ranked = 0;
   trs.forEach((tr) => {
     const mpg = tr.dataset.mpg === '' ? NaN : Number(tr.dataset.mpg);
-    tr.hidden = (q && !tr.dataset.find.includes(q)) || Number(tr.dataset.gp) < minGp || (minMpg > 0 && !(mpg >= minMpg))
-      || (state.ppos !== 'all' && tr.dataset.pos !== state.ppos);
+    // Rank within the position/minimums pool; search only hides rows, so a found player keeps her rank.
+    const inPool = Number(tr.dataset.gp) >= minGp && !(minMpg > 0 && !(mpg >= minMpg))
+      && (state.ppos === 'all' || tr.dataset.pos === state.ppos);
+    if (inPool) tr.cells[0].textContent = ++ranked;
+    tr.hidden = !inPool || (q && !tr.dataset.find.includes(q));
     if (!tr.hidden) shown++;
     tr.classList.toggle('alt', !tr.hidden && shown % 2 === 0); // stripe visible rows only
   });
